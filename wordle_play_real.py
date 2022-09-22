@@ -11,6 +11,7 @@ import time
 
 parser = argparse.ArgumentParser(description='For test and so on')
 
+#Create a list of possible correct words
 def extract_wordlist(try_wordlist, f, word):
     for i, a in enumerate(f):
         if word.count(word[i]) >= 2:
@@ -29,12 +30,8 @@ def extract_wordlist(try_wordlist, f, word):
 
     return try_wordlist
 
-
+#find the word list that contains hiragana that was yellow last time
 def find_word(word, find, find_word_list):
-
-    for i, (w, a) in enumerate(zip(word, find)):
-        """if a == 0:
-            find_word_list = find_word_list[np.where(find_word_list[:, i] == w)]"""
     for i, (w, b) in enumerate(zip(word, find)):
         if b == 1:
             new_list = []
@@ -47,6 +44,7 @@ def find_word(word, find, find_word_list):
     #word list
     return find_word_list
 
+#compare current word and correct word
 def return_find(word, find):
     for i in range(4):
         if find[i] == 1:
@@ -61,8 +59,9 @@ def return_find(word, find):
 
     return find
 
+# recursive function
 def test(find, ex_word, try_wordlist):
-    #check
+    #check finish or not
     if np.sum(find) == 0:
         if not use_eval:
             print("Congratulation!!!")
@@ -76,7 +75,7 @@ def test(find, ex_word, try_wordlist):
         num = len(try_wordlist)
         index = random.randint(0,num-1)
 
-    else:
+    else: # already at least one letter has been found
         try_wordlist = extract_wordlist(try_wordlist, find, ex_word)
         try_wordlist = find_word(ex_word, find, try_wordlist)
         num = len(try_wordlist)
@@ -91,7 +90,7 @@ def test(find, ex_word, try_wordlist):
         print("lest of vocab", num)
 
 
-
+    # A mode in which the user enters the data himself each time.
     if use_input:
         while True:
             print("input try word : ")
@@ -103,9 +102,9 @@ def test(find, ex_word, try_wordlist):
             if len(try_word) == 4:
                 break
             print("word must be 4 characters!")
-    else:
+    else: #usual mode that program don't need user input
         if use_super:
-            #Calculate which words are the most narrowly defined.
+            #Calculate which word would most reduce the possibility of a list of correct answers.
             if args.cheat:
                 min_len = 3000
             else:
@@ -115,13 +114,14 @@ def test(find, ex_word, try_wordlist):
                     try_word = list("かいうん")
                 else:
                     try_word = list("れんぱつ")
-            else:
+            else: #except first time
                 try_find = copy.deepcopy(find)
                 for i in range(4):
+                    #have to reset
                     if try_find[i] == 1:
                         try_find[i] = 2
                 for try_few_word in try_wordlist:
-                    try_len = len(extract_wordlist(copy.deepcopy(try_wordlist), try_find, try_few_word))
+                    try_len = len(extract_wordlist(copy.deepcopy(try_wordlist), try_find, try_few_word)) # the number of a list of correct answers
                     if try_len == 0:
                         continue
                     else:
@@ -155,16 +155,18 @@ def test(find, ex_word, try_wordlist):
         else:
             try_word = try_wordlist[index]
 
+        #print  current word
         ans = ''
         for s in try_word:
             ans = ans + s
         if not use_eval:
             print(ans)
+    #usual case
     if use_test:
         print("input correct : ")
         find = list(input())
         find = [int(a) for a in find]
-    else:
+    else: # for evaluation
         find = return_find(try_word, find)
         if not use_eval:
             print(find)
@@ -176,9 +178,7 @@ def main():
     avg_prob = 0
     prob_array = []
     faild = 0
-    #reset find
-    #decide correct word
-    #prob
+    #for evaluation
     if use_eval:
         global correct_word
         print("input number of eval : ")
@@ -188,8 +188,8 @@ def main():
             #reset find
             find = [2]*4
             #decide correct word
-            #correct_word = wordlist[random.randint(0,num_wordlist-1)]
-            correct_word = wordlist[i]
+            correct_word = wordlist[random.randint(0,num_wordlist-1)]
+            #correct_word = wordlist[i]
             #print("Correct word : ",correct_word)
             #prob
             prob = test(find, [], valid_wordlists)

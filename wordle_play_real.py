@@ -4,6 +4,7 @@ import numpy as np
 import argparse
 import copy
 import statistics
+import math
 
 import time
 #from extract_for_wordle import extract_wordlist
@@ -45,16 +46,16 @@ def find_word(word, find, find_word_list):
     return find_word_list
 
 #compare current word and correct word
-def return_find(word, find):
+def return_find(word, find, correct):
     for i in range(4):
         if find[i] == 1:
             find[i] = 2
 
     for i, w in enumerate(word):
-        if w == correct_word[i]:
+        if w == correct[i]:
             find[i] = 0
     for i, w in enumerate(word):
-        if w in correct_word and find[i] == 2:
+        if w in correct and find[i] == 2:
                 find[i] = 1
 
     return find
@@ -105,21 +106,39 @@ def test(find, ex_word, try_wordlist):
     else: #usual mode that program don't need user input
         if use_super:
             #Calculate which word would most reduce the possibility of a list of correct answers.
-            if args.cheat:
-                min_len = 3000
-            else:
-                min_len = 40000
+            min_len = 1e12
             if num == num_valid_wordlist: #first time
                 if args.cheat:
                     try_word = list("かいうん")
                 else:
                     try_word = list("れんぱつ")
             else: #except first time
+                """
                 try_find = copy.deepcopy(find)
                 for i in range(4):
                     #have to reset
                     if try_find[i] == 1:
                         try_find[i] = 2
+"""
+                for word_to_guess in try_wordlist:
+                    temp_eval_to_words_map = {}
+                    for possible_answer in try_wordlist:
+                        evaluation = tuple(return_find(possible_answer,[2,2,2,2], word_to_guess))
+
+                        # store word by evaluation tuple in a list
+                        if tuple(evaluation) not in temp_eval_to_words_map:
+                            temp_eval_to_words_map[tuple(evaluation)] = [possible_answer]
+                        else:
+                            temp_eval_to_words_map[tuple(evaluation)].append(possible_answer)
+
+                    # metric we are trying to minimize
+                    biggest_possible_remaining_wordcount = max([len(val) for val in temp_eval_to_words_map.values()])
+
+                    # if we found a new minimum
+                    if biggest_possible_remaining_wordcount < min_len:
+                        min_len = biggest_possible_remaining_wordcount
+                        try_word = word_to_guess
+                """
                 for try_few_word in try_wordlist:
                     try_len = len(extract_wordlist(copy.deepcopy(try_wordlist), try_find, try_few_word)) # the number of a list of correct answers
                     if try_len == 0:
@@ -131,7 +150,7 @@ def test(find, ex_word, try_wordlist):
                 if min_len == 3000 or min_len == 40000:
                     #test
                     min_len = 12000
-                    for try_few_word in try_wordlist:
+
                         try_len = 1
                         for i in range(4):
                             if try_find[i] != 0:
@@ -148,7 +167,7 @@ def test(find, ex_word, try_wordlist):
                         try_word = try_wordlist[index]
                         if min_len >= 10:
                             global error
-                            error += 1
+                            error += 1"""
                 if not use_eval:
                     print("min_len", min_len)
 
@@ -167,7 +186,7 @@ def test(find, ex_word, try_wordlist):
         find = list(input())
         find = [int(a) for a in find]
     else: # for evaluation
-        find = return_find(try_word, find)
+        find = return_find(try_word, find, correct_word)
         if not use_eval:
             print(find)
 
@@ -188,13 +207,14 @@ def main():
             #reset find
             find = [2]*4
             #decide correct word
-            correct_word = wordlist[random.randint(0,num_wordlist-1)]
-            #correct_word = wordlist[i]
+            #correct_word = wordlist[random.randint(0,num_wordlist-1)]
+            correct_word = wordlist[i]
             #print("Correct word : ",correct_word)
             #prob
             prob = test(find, [], valid_wordlists)
             if prob > 12:
                 faild += 1
+                fail_word.append(correct_word)
 
             prob_array.append(prob)
             avg_prob += prob
@@ -230,6 +250,7 @@ def main():
 if __name__ == '__main__':
     use_test = True
     correct_word = []
+    fail_word = []
     #parser
     parser.add_argument('-t', '--test', help='correct word', default = "")
     parser.add_argument('-i','--input', help='self-input', action = "store_true")
@@ -259,24 +280,19 @@ if __name__ == '__main__':
     num_wordlist = len(wordlists)
     num_valid_wordlist = len(valid_wordlist)
 
-    wordlists = wordlists
     wordlist = []
     for wl in wordlists:
         wordlist.append(list(wl))
-    wordlist = wordlist
 
-    valid_wordlist = valid_wordlist
     valid_wordlists = []
     for valid_wl in valid_wordlist:
         valid_wordlists.append(list(valid_wl))
-    valid_wordlists = valid_wordlists
 
     del wordlists
     del valid_wordlist
 
     #test
-    error = 0
 
     main()
-    print(error)
+    #print(fail_word)
 

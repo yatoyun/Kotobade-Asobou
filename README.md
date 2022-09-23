@@ -1,5 +1,7 @@
 ## Kotobade-Asobou
 
+###このプログラムはハードモード用です
+
 言葉で遊ぼうをこのプログラムを使って遊ぶ場合は
 
 ```!python wordle_play_real.py -s -c```
